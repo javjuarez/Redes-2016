@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# Comentario
 import sys
 import xmlrpclib
 import socket
