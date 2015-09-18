@@ -12,6 +12,7 @@ def agregaUsuario(dirIp, nombreUsuario):
 
 def quitarUsuario(dirIp):
 	del usuariosConectados[dirIp]
+	# print usuariosConectados
 	return usuariosConectados
 
 def getUsuarios():
@@ -27,4 +28,7 @@ servidor.register_function(agregaUsuario, "agregaUsuario")
 servidor.register_function(quitarUsuario, "quitarUsuario")
 servidor.register_function(getUsuarios, "getUsuarios")
 servidor.register_function(printUsuarios, "printUsuarios")
-servidor.serve_forever()
+try:
+	servidor.serve_forever()
+except KeyboardInterrupt:
+	print "Saliendo"

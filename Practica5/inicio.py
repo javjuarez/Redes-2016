@@ -18,13 +18,15 @@ class lista(QWidget):
     def __init__(self, diccUsuarios, ipLocal, nombreUsuario):
         QWidget.__init__(self)
 
+        self.setWindowTitle('Contactos conectados')
+
         self.ipLocal = ipLocal
         self.usuario = nombreUsuario
         self.contectados = diccUsuarios
 
         # No se muestra el usuario "anfitrión"
-        if ipLocal in diccUsuarios.keys():
-            del diccUsuarios[ipLocal]
+        if self.ipLocal in diccUsuarios.keys():
+            del diccUsuarios[self.ipLocal]
 
         # Se muestra la lista de usuarios conectados en el servidor
         self.lista = QListWidget()
@@ -35,12 +37,16 @@ class lista(QWidget):
         vbox = QVBoxLayout()
         vbox.addWidget(self.lista)
 
-        self.botonMostrar = QPushButton("Mostrar y agregar")
+        self.botonMostrar = QPushButton("Mostrar y agregar") # Cambiar a conectar
         vbox.addWidget(self.botonMostrar)
+
+        self.botonActualiza = QPushButton("Actualizar lista")
+        vbox.addWidget(self.botonActualiza)
 
         self.setLayout(vbox)
 
         self.botonMostrar.clicked.connect(self.mostrarListas)
+        self.botonActualiza.clicked.connect(self.actualiza)
 
     def mostrarListas(self):
         texto = str(self.lista.currentItem().text())
@@ -48,9 +54,31 @@ class lista(QWidget):
         print listaUtil
         print listaUtil[0]
         print listaUtil[1]
-        print "Actualizando elementos"
+
+        direccion = listaUtil[0]
+        nombreUsuario = listaUtil[1]
+
+        if len(direccion) > 0 and len(nombreUsuario) > 0 and EstablecerConexion(direccion) :
+            global chat
+            global proxy
+            chat = Gui(direccion, nombreUsuario)
+            chat.show()
+        else:
+            print "No se puede iniciar el chat (direccion invalida o campos vacios)"
+
+        # print "Actualizando elementos"
+        # self.lista.clear()
+        # nuevoDic = {"10.0.0.2":"javier", "10.0.0.5":"moni"}
+        # for keys in nuevoDic.keys():
+        #     item = QListWidgetItem(keys + "-" + nuevoDic[keys])
+        #     self.lista.addItem(item)
+
+    def actualiza(self):
         self.lista.clear()
-        nuevoDic = {"10.0.0.2":"javier", "10.0.0.5":"moni"}
+        nuevoDic = proxy.getUsuarios()
+        # No se muestra el usuario "anfitrión"
+        if self.ipLocal in nuevoDic.keys():
+            del nuevoDic[self.ipLocal]
         for keys in nuevoDic.keys():
             item = QListWidgetItem(keys + "-" + nuevoDic[keys])
             self.lista.addItem(item)
@@ -65,6 +93,7 @@ class Conectar(QWidget):
         self.nick = QLineEdit()
         self.btn_server = QPushButton("Corre servidor")
         self.btn_connect = QPushButton("Conectar")
+        self.btn_disconnect = QPushButton("Desconectar")
         
         hIpServ = QHBoxLayout()
         hIpLocal = QHBoxLayout()
@@ -85,6 +114,7 @@ class Conectar(QWidget):
         vbox.addLayout(hNick)
         vbox.addWidget(self.btn_server)
         vbox.addWidget(self.btn_connect)
+        vbox.addWidget(self.btn_disconnect)
 
         self.setGeometry(0,0,400,200)
         
@@ -93,6 +123,11 @@ class Conectar(QWidget):
         # self.btn_connect.clicked.connect(self.conectaProxy)
         self.btn_connect.clicked.connect(self.conectaServidorContactos)
         self.btn_server.clicked.connect(self.iniciaServidor)
+        self.btn_disconnect.clicked.connect(self.desconectarServidor)
+
+    def desconectarServidor(self):
+        proxy.quitarUsuario(self.ipLocal)
+        self.close()
 
     def conectaServidorContactos(self):
         direccion = str(self.ipServidor.text().toAscii())
@@ -105,7 +140,7 @@ class Conectar(QWidget):
             dicc = proxy.getUsuarios()
             listado = lista(dicc, ipLocal, nombreUsuario)
             listado.show()
-            proxy.printUsuarios()
+            # proxy.printUsuarios()
         
     # def conectaProxy(self):
     #     global hostProxy
