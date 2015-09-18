@@ -14,54 +14,119 @@ from PyQt4.QtGui import *
 
 # chat = ""
 
+class lista(QWidget):
+    def __init__(self, diccUsuarios, ipLocal, nombreUsuario):
+        QWidget.__init__(self)
+
+        self.ipLocal = ipLocal
+        self.usuario = nombreUsuario
+        self.contectados = diccUsuarios
+
+        # No se muestra el usuario "anfitrión"
+        if ipLocal in diccUsuarios.keys():
+            del diccUsuarios[ipLocal]
+
+        # Se muestra la lista de usuarios conectados en el servidor
+        self.lista = QListWidget()
+        for keys in self.contectados.keys():
+            item = QListWidgetItem(keys + "-" + self.contectados[keys])
+            self.lista.addItem(item)
+        
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.lista)
+
+        self.botonMostrar = QPushButton("Mostrar y agregar")
+        vbox.addWidget(self.botonMostrar)
+
+        self.setLayout(vbox)
+
+        self.botonMostrar.clicked.connect(self.mostrarListas)
+
+    def mostrarListas(self):
+        texto = str(self.lista.currentItem().text())
+        listaUtil = texto.split("-")
+        print listaUtil
+        print listaUtil[0]
+        print listaUtil[1]
+        print "Actualizando elementos"
+        self.lista.clear()
+        nuevoDic = {"10.0.0.2":"javier", "10.0.0.5":"moni"}
+        for keys in nuevoDic.keys():
+            item = QListWidgetItem(keys + "-" + nuevoDic[keys])
+            self.lista.addItem(item)
+
 class Conectar(QWidget):
     def __init__(self):
         QWidget.__init__(self)
 
         self.setWindowTitle('Conectar direccion IP')
-        self.ip = QLineEdit()
+        self.ipServidor = QLineEdit()
+        self.ipLocal = QLineEdit()
         self.nick = QLineEdit()
         self.btn_server = QPushButton("Corre servidor")
         self.btn_connect = QPushButton("Conectar")
         
-        hIp = QHBoxLayout()
+        hIpServ = QHBoxLayout()
+        hIpLocal = QHBoxLayout()
         hNick = QHBoxLayout()
         vbox = QVBoxLayout()
         
         hNick.addWidget(QLabel("Nick name:"))
         hNick.addWidget(self.nick)
 
-        hIp.addWidget(QLabel("Ip dir:"))
-        hIp.addWidget(self.ip)
+        hIpLocal.addWidget(QLabel("Dir IP local"))
+        hIpLocal.addWidget(self.ipLocal)
+
+        hIpServ.addWidget(QLabel("Dir IP de servidor:"))
+        hIpServ.addWidget(self.ipServidor)
         
-        vbox.addLayout(hIp)
+        vbox.addLayout(hIpServ)
+        vbox.addLayout(hIpLocal)
         vbox.addLayout(hNick)
         vbox.addWidget(self.btn_server)
         vbox.addWidget(self.btn_connect)
+
+        self.setGeometry(0,0,400,200)
         
         self.setLayout(vbox)
         
-        self.btn_connect.clicked.connect(self.conectaProxy)
+        # self.btn_connect.clicked.connect(self.conectaProxy)
+        self.btn_connect.clicked.connect(self.conectaServidorContactos)
         self.btn_server.clicked.connect(self.iniciaServidor)
 
-    def conectaProxy(self):
-        global hostProxy
-        # chat = Gui()
-        direccion = str(self.ip.text().toAscii())
+    def conectaServidorContactos(self):
+        direccion = str(self.ipServidor.text().toAscii())
+        ipLocal = str(self.ipLocal.text().toAscii())
         nombreUsuario = str(self.nick.text().toAscii())
-        # proxy = xmlrpclib.ServerProxy("http://" + direccion + ":8000/")
-        # hostProxy = str(proxy.gethostname1()) #Para obtener el nombre del equipo-servidor al que nos conectamos
-        if len(direccion) > 0 and len(nombreUsuario) > 0 and EstablecerConexion(direccion) :
-        	global chat
-        	global proxy
-        	chat = Gui(direccion, nombreUsuario)
-        	chat.show()
-        else:
-        	print "No se puede iniciar el chat (direccion invalida o campos vacios)"
+        if len(direccion) > 0 and len(nombreUsuario) > 0 and EstablecerConexion(direccion):
+            global listado
+            global proxy
+            proxy.agregaUsuario(ipLocal, nombreUsuario)
+            dicc = proxy.getUsuarios()
+            listado = lista(dicc, ipLocal, nombreUsuario)
+            listado.show()
+            proxy.printUsuarios()
+        
+    # def conectaProxy(self):
+    #     global hostProxy
+    #     # chat = Gui()
+    #     direccion = str(self.ip.text().toAscii())
+    #     nombreUsuario = str(self.nick.text().toAscii())
+    #     # proxy = xmlrpclib.ServerProxy("http://" + direccion + ":8000/")
+    #     # hostProxy = str(proxy.gethostname1()) #Para obtener el nombre del equipo-servidor al que nos conectamos
+    #     if len(direccion) > 0 and len(nombreUsuario) > 0 and EstablecerConexion(direccion) :
+    #     	global chat
+    #     	global proxy
+    #     	chat = Gui(direccion, nombreUsuario)
+    #     	chat.show()
+    #     else:
+    #     	print "No se puede iniciar el chat (direccion invalida o campos vacios)"
 	
     def iniciaServidor(self):
     	dirIp = "10.0.0.3"
+        # dirIp = "localhost"
     	t = threading.Thread(target=correServidor, args=(dirIp,), name="servidor")
+        t.setDaemon(True)
     	t.start()
     	# self.servidor = SimpleXMLRPCServer(("10.0.0.3", 8000)) # Bob
     	# self.servidor.serve_forever
@@ -115,15 +180,16 @@ def audioEnviado(audio, usuario):
         playAudio(audio)
         # chat.recv.append("* Fin del audio")
 
-def correServidor(ipLocal):
+def correServidor(ipLocal):    
     servidor = SimpleXMLRPCServer((ipLocal, 8000))
     servidor.register_function(gethostname1, "gethostname1")
     servidor.register_function(mensajeEnviado, "mensajeEnviado")
     servidor.register_function(playAudio, "playAudio")
     servidor.register_function(audioEnviado, "audioEnviado")
     try:
-       print "Ctrl + C para salir"
-       servidor.serve_forever()
+        print "Escuchado por el puerto 8000"
+        print "Ctrl + C para salir"
+        servidor.serve_forever()
     except KeyboardInterrupt:
         print "Saliendo"
 
