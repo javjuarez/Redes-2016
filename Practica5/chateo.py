@@ -8,7 +8,6 @@ import threading
 import pyaudio
 import wave
 
-from SimpleXMLRPCServer import SimpleXMLRPCServer
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 

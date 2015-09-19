@@ -37,7 +37,7 @@ class lista(QWidget):
         vbox = QVBoxLayout()
         vbox.addWidget(self.lista)
 
-        self.botonMostrar = QPushButton("Mostrar y agregar") # Cambiar a conectar
+        self.botonMostrar = QPushButton("Conectar chat") # Cambiar a conectar
         vbox.addWidget(self.botonMostrar)
 
         self.botonActualiza = QPushButton("Actualizar lista")
@@ -45,10 +45,10 @@ class lista(QWidget):
 
         self.setLayout(vbox)
 
-        self.botonMostrar.clicked.connect(self.mostrarListas)
+        self.botonMostrar.clicked.connect(self.conectaChat)
         self.botonActualiza.clicked.connect(self.actualiza)
 
-    def mostrarListas(self):
+    def conectaChat(self):
         texto = str(self.lista.currentItem().text())
         listaUtil = texto.split("-")
         print listaUtil
@@ -56,13 +56,17 @@ class lista(QWidget):
         print listaUtil[1]
 
         direccion = listaUtil[0]
-        nombreUsuario = listaUtil[1]
+        usuarioChatear = listaUtil[1]
+        nombreUsuario = self.usuario
+        par = EstablecerConexion(direccion)
 
-        if len(direccion) > 0 and len(nombreUsuario) > 0 and EstablecerConexion(direccion) :
+        if len(direccion) > 0 and len(nombreUsuario) > 0 and par[0] :
             global chat
-            global proxy
+            global proxyListado
+            proxyListado = par[1]
             chat = Gui(direccion, nombreUsuario)
             chat.show()
+            proxyServ.senialVentana(direccion, nombreUsuario, usuarioChatear, self.ipLocal) # Muestra la ventana del chat en el otro usuario
         else:
             print "No se puede iniciar el chat (direccion invalida o campos vacios)"
 
@@ -75,7 +79,7 @@ class lista(QWidget):
 
     def actualiza(self):
         self.lista.clear()
-        nuevoDic = proxy.getUsuarios()
+        nuevoDic = proxyServ.getUsuarios()
         # No se muestra el usuario "anfitrión"
         if self.ipLocal in nuevoDic.keys():
             del nuevoDic[self.ipLocal]
@@ -126,18 +130,22 @@ class Conectar(QWidget):
         self.btn_disconnect.clicked.connect(self.desconectarServidor)
 
     def desconectarServidor(self):
-        proxy.quitarUsuario(self.ipLocal)
+        print proxyServ.getUsuarios()
+        proxyServ.quitarUsuario(self.ipLocal)
         self.close()
 
     def conectaServidorContactos(self):
         direccion = str(self.ipServidor.text().toAscii())
         ipLocal = str(self.ipLocal.text().toAscii())
         nombreUsuario = str(self.nick.text().toAscii())
-        if len(direccion) > 0 and len(nombreUsuario) > 0 and EstablecerConexion(direccion):
+
+        par = EstablecerConexion(direccion)
+        if len(direccion) > 0 and len(nombreUsuario) > 0 and par[0]:
             global listado
-            global proxy
-            proxy.agregaUsuario(ipLocal, nombreUsuario)
-            dicc = proxy.getUsuarios()
+            global proxyServ
+            proxyServ = par[1]
+            proxyServ.agregaUsuario(ipLocal, nombreUsuario)
+            dicc = proxyServ.getUsuarios()
             listado = lista(dicc, ipLocal, nombreUsuario)
             listado.show()
             # proxy.printUsuarios()
@@ -215,12 +223,19 @@ def audioEnviado(audio, usuario):
         playAudio(audio)
         # chat.recv.append("* Fin del audio")
 
+def showVentana(dirIp, nombreUsuario, usuarioChatear):
+    print nombreUsuario
+    chatShow = Gui(dirIp, usuarioChatear)
+    chatShow.show()
+    chatShow.recv.append(nombreUsuario + " ha iniciado un chat contigo")
+
 def correServidor(ipLocal):    
-    servidor = SimpleXMLRPCServer((ipLocal, 8000))
+    servidor = SimpleXMLRPCServer((ipLocal, 8000), allow_none=True)
     servidor.register_function(gethostname1, "gethostname1")
     servidor.register_function(mensajeEnviado, "mensajeEnviado")
     servidor.register_function(playAudio, "playAudio")
     servidor.register_function(audioEnviado, "audioEnviado")
+    servidor.register_function(showVentana, "showVentana")
     try:
         print "Escuchado por el puerto 8000"
         print "Ctrl + C para salir"
@@ -231,15 +246,15 @@ def correServidor(ipLocal):
 
 def EstablecerConexion(ip):
 	if(len(ip) > 0):
-		global proxy
+		# global proxy
 		try:
 			proxy = xmlrpclib.ServerProxy("http://" + ip + ":8000/")
 		except IOError:
 			print "La ip no es valida"
-			return False
-		return True
+			return (False, None)
+		return (True, proxy)
 	else :
-		return False
+		return (False, None)
 
 App = QApplication(sys.argv)
 # GUI = Gui("127.0.0.1", "Javier")
