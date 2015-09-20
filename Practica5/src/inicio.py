@@ -66,7 +66,7 @@ class lista(QWidget):
             proxyListado = par[1]
             chat = Gui(direccion, nombreUsuario)
             chat.show()
-            proxyServ.senialVentana(direccion, nombreUsuario, usuarioChatear, self.ipLocal) # Muestra la ventana del chat en el otro usuario
+            # proxyServ.senialVentana(direccion, nombreUsuario, usuarioChatear, self.ipLocal) # Muestra la ventana del chat en el otro usuario
         else:
             print "No se puede iniciar el chat (direccion invalida o campos vacios)"
 
@@ -131,7 +131,8 @@ class Conectar(QWidget):
 
     def desconectarServidor(self):
         print proxyServ.getUsuarios()
-        proxyServ.quitarUsuario(self.ipLocal)
+        ip = str(self.ipLocal.text().toAscii())
+        proxyServ.quitarUsuario(ip)
         self.close()
 
     def conectaServidorContactos(self):
@@ -226,6 +227,7 @@ def audioEnviado(audio, usuario):
 def showVentana(dirIp, nombreUsuario, usuarioChatear):
     print nombreUsuario
     chatShow = Gui(dirIp, usuarioChatear)
+    print chatShow
     chatShow.show()
     chatShow.recv.append(nombreUsuario + " ha iniciado un chat contigo")
 

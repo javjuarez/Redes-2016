@@ -30,9 +30,9 @@ class Listener():
 		print usuariosConectados
 
 	def senialVentana(self, dirIpRemota, nombreUsuario, usuarioChatear, dirIpLocal):
-		print dirIpRemota
+		# print dirIpRemota
 		proxy = xmlrpclib.ServerProxy("http://" + dirIpRemota + ":8000/")
-		print proxy
+		# print proxy
 		proxy.showVentana(dirIpLocal, nombreUsuario, usuarioChatear)
 
 # Servidor de contactos
