@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Comentario
+
 import sys
 import xmlrpclib
 import socket
@@ -27,13 +27,10 @@ def EstablecerConexion(ip):
     else :
         return False
 
+# Clase que muestra la interfaz gráfica de un chat
 class Gui(QWidget):
     def __init__(self, ipProxy, usuarioL):
         QWidget.__init__(self)
-        
-        # self.proxy = xmlrpclib.ServerProxy("http://" + ipProxy + ":8000/")
-        # print self.proxy
-
 
         global usuarioLocal 
         self.usuarioLocal = usuarioL
@@ -42,6 +39,7 @@ class Gui(QWidget):
             print "Conexión fallida"
             self.close()
 
+        # Iniciamos la interfaz
         self.setWindowTitle('Chat')
         
         self.recv = QTextEdit()
@@ -62,29 +60,27 @@ class Gui(QWidget):
         hbox.addWidget(self.btn_send)
         
         self.setLayout(vbox)
- 
+
+        # Asignamos funciones a los botones
         self.btn_send.clicked.connect(self.enviar)
         self.btn_audio.clicked.connect(self.audio)
         self.btn_video.clicked.connect(self.video)
 
-        # print self.proxyChat
-
+    # Función que muestra el mensaje en ambos lados del chat
     def enviar(self):
 
         texto = str(self.send.text().toAscii())
         print proxy.gethostname1()
-        # hostProxy = str(self.proxy.gethostname1()) #Para obtener el nombre del equipo-servidor al que nos conectamos
-        # print hostProxy
         if texto != "":
             self.recv.append("Tu ---> \n" + texto)
             self.send.setText("")
             proxy.mensajeEnviado(texto, self.usuarioLocal)
             return True
 
+    # Función que envia un audio grabado de un chat a otro
     def audio(self):
         self.recv.append("* Grabando audio, tienes 3 segundos...")
         self.grabar();
-        # proxy.audioEnviado(audio, self.usuarioLocal)
         return True
 
     def grabar(self):
@@ -104,22 +100,17 @@ class Gui(QWidget):
                         input=True,
                         frames_per_buffer=CHUNK)
 
-        # print("* recording")
-        # self.recv.append("* Grabando audio, tienes 3 segundos...")
-
         frames = []
 
         for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
             data = stream.read(CHUNK)
             frames.append(data)
 
-        # print("* done recording")
         self.recv.append("* Fin de grabado")
 
         stream.stop_stream()
         stream.close()
         p.terminate()
-        # return frames
 
         wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
         wf.setnchannels(CHANNELS)
