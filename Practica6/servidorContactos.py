@@ -54,11 +54,11 @@ class Listener():
 		try:
 			vivo = proxy.getConectado()
 			if vivo:
-				print "En línea"
+				print str(proxy) + ": En línea"
 			else:
 				print "Muerto por variable"
 		except socket_error:
-			print "Muerto por exception"
+			print str(proxy) +  ": Muerto por exception"
 			t.cancel()
 			self.actualizaListas()
 		t.daemon = True

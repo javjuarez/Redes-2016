@@ -58,18 +58,19 @@ class lista(QWidget):
         direccion = listaUtil[0]
         usuarioChatear = listaUtil[1]
         nombreUsuario = self.usuario
-        par = EstablecerConexion(direccion)
+        try:
+            par = EstablecerConexion(direccion)
 
-        if len(direccion) > 0 and len(nombreUsuario) > 0 and par[0] :
-            global chat
-            global proxyListado
-            proxyListado = par[1]
-            chat = Gui(direccion, nombreUsuario)
-            chat.show()
-            # Muestra la ventana del chat en el otro usuario
-            # proxyServ.senialVentana(direccion, nombreUsuario, usuarioChatear, self.ipLocal)
-        else:
-            print "No se puede iniciar el chat (direccion invalida o campos vacios)"
+            if len(direccion) > 0 and len(nombreUsuario) > 0 and par[0] :
+                global chat
+                global proxyListado
+                proxyListado = par[1]
+                chat = Gui(direccion, nombreUsuario)
+                chat.show()
+                # Muestra la ventana del chat en el otro usuario
+                # proxyServ.senialVentana(direccion, nombreUsuario, usuarioChatear, self.ipLocal)
+        except Exception, e:
+            QMessageBox.warning(self, "Advertencia", "Conexion rechazada: \nUsuario no conectado")
 
     # Actualiza la lista de usuarios, muestra si un usuario
     # se está conectado o no
@@ -132,41 +133,53 @@ class Conectar(QWidget):
     # Desconecta al usuario del servidor de contactos y
     # cierra el programa
     def desconectarServidor(self):
-        global estoyConectado
-        print proxyServ.getUsuarios()
-        ip = str(self.ipLocal.text().toAscii())
-        proxyServ.quitarUsuario(ip)
-        estoyConectado = False
-        QCoreApplication.instance().quit()
+        try:
+            global estoyConectado
+            print proxyServ.getUsuarios()
+            proxyServ.quitarUsuario(ipLocal)
+            estoyConectado = False
+            QCoreApplication.instance().quit()
+        except Exception, e:
+            QMessageBox.warning(self, "Advertencia", "No es posible desconectarse")
 
     # Conecta al usuario con el servidor de contactos y
     # muestra la lista de usuarios conectados
     def conectaServidorContactos(self):
+        global ipLocal
         direccion = str(self.ipServidor.text().toAscii())
         ipLocal = str(self.ipLocal.text().toAscii())
         nombreUsuario = str(self.nick.text().toAscii())
-
-        par = EstablecerConexion(direccion)
-        if len(direccion) > 0 and len(nombreUsuario) > 0 and par[0]:
-            global listado
-            global proxyServ
-            global estoyConectado
-            proxyServ = par[1]
-            estoyConectado = True
-            proxyServ.agregaUsuario(ipLocal, nombreUsuario)
-            dicc = proxyServ.getUsuarios()
-            listado = lista(dicc, ipLocal, nombreUsuario)
-            listado.show()
-            print estoyConectado
+        try:
+            par = EstablecerConexion(direccion)
+            if not len(nombreUsuario) > 0:
+                QMessageBox.warning(self, "Advertencia", "Conexion rechazada:\nEscribe un nick name (nombre de usuario)")
+            elif len(direccion) > 0  and par[0]:
+                global listado
+                global proxyServ
+                global estoyConectado
+                proxyServ = par[1]
+                estoyConectado = True
+                proxyServ.agregaUsuario(ipLocal, nombreUsuario)
+                dicc = proxyServ.getUsuarios()
+                listado = lista(dicc, ipLocal, nombreUsuario)
+                # proxyServ.actualizaListas()
+                listado.show()
+                print estoyConectado
+        except Exception, e:
+            QMessageBox.warning(self, "Advertencia", "Conexion rechazada:\nIp propia o de servidor invalida")
 	
     # Inicia el servidor propio del usuario, esto con tal de
     # que se pueda comunicar con otros usuarios
     def iniciaServidor(self):
-    	dirIp = "10.0.0.3"
+    	dirIp = str(self.ipLocal.text().toAscii())
+        try:
+            t = threading.Thread(target=correServidor, args=(dirIp,), name="servidor")
+            t.setDaemon(True)
+            t.start()
+        except Exception:
+            QMessageBox.warning(self, "Advertencia", "No es posible correr tu propio servidor:\nDireccion invalida")
         # dirIp = "localhost"
-    	t = threading.Thread(target=correServidor, args=(dirIp,), name="servidor")
-        t.setDaemon(True)
-    	t.start()
+            
     	# self.servidor = SimpleXMLRPCServer(("10.0.0.3", 8000)) # Bob
 		# self.servidor = SimpleXMLRPCServer(("10.0.0.4", 8000)) # Alice
 
