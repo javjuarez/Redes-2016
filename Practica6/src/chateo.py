@@ -8,6 +8,8 @@ import threading
 import pyaudio
 import wave
 
+import cv2
+
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
@@ -123,4 +125,8 @@ class Gui(QWidget):
         proxy.audioEnviado(audio, self.usuarioLocal)
 
     def video(self):
-        pass
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            QMessageBox.warning(self, "Advertencia", "No se encuentra dispositivo:\nAsegurate de conectar una camara")
+        else:
+            pass

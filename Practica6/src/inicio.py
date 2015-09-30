@@ -162,11 +162,13 @@ class Conectar(QWidget):
                 proxyServ.agregaUsuario(ipLocal, nombreUsuario)
                 dicc = proxyServ.getUsuarios()
                 listado = lista(dicc, ipLocal, nombreUsuario)
-                # proxyServ.actualizaListas()
                 listado.show()
+                # Actualiza la lista de los demás usuarios al momento
+                # de conectarse
+                # proxyServ.actualizaListas()
                 print estoyConectado
         except Exception, e:
-            QMessageBox.warning(self, "Advertencia", "Conexion rechazada:\nIp propia o de servidor invalida")
+            QMessageBox.warning(self, "Advertencia", "Conexion rechazada:\nIp propia y/o de servidor invalida")
 	
     # Inicia el servidor propio del usuario, esto con tal de
     # que se pueda comunicar con otros usuarios
@@ -245,6 +247,7 @@ class Listener():
         chatShow.show()
         chatShow.recv.append(nombreUsuario + " ha iniciado un chat contigo")
 
+    # Actualiza la lista de contactos automáticamente
     def actualizaListaContactos(self):
         print "Actualizando lista de contactos"
         listado.actualiza()
